@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { makeStyles } from "@material-ui/core/styles";
-import Button from "@material-ui/core/Button";
-import TextField from "@material-ui/core/TextField";
-import InputLabel from "@material-ui/core/InputLabel";
-import MenuItem from "@material-ui/core/MenuItem";
-import Select from "@material-ui/core/Select";
-import FormControl from "@material-ui/core/FormControl";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
+import {
+  makeStyles,
+  Button,
+  TextField,
+  InputLabel,
+  MenuItem,
+  Select,
+  FormControl,
+  ButtonGroup,
+} from "@material-ui/core/";
 
 const useStyles = makeStyles((theme) => ({
   table: {
