@@ -39,7 +39,7 @@ exports.createRecord = async (req, res) => {
 //Get 10 elements
 exports.getSome = async (req, res) => {
   try {
-    const query = 'SELECT * FROM records limit 10';
+    const query = 'SELECT * FROM records ORDER BY id DESC limit 10';
 
     const response = await qy(query);
 
@@ -59,14 +59,14 @@ exports.modifyRecord = async (req, res) => {
     }
 
     let query = 'SELECT * FROM records WHERE id = ?';
-    let response = await qy(query, [req.body.concept, req.body.amount, req.body.datetime]);
+    let response = await qy(query, [req.params.id]);
 
-    if (response.length > 0) {
+    if (response.length == 0) {
       throw new Error("Id don't exist");
     }
 
-    query = 'UPDATE records SET concept = ?, amount = ?, datetime = ? WHERE id = ?';
-    response = await qy(query, [req.body.concept, req.body.amount, req.body.datetime, req.params.id]);
+    query = 'UPDATE records SET concept = ?, amount = ? WHERE id = ?';
+    response = await qy(query, [req.body.concept, req.body.amount, req.params.id]);
 
     res.send({ "response": response.affectedRows });
 
@@ -118,7 +118,7 @@ exports.deleteOne = async(req, res) => {
     let query = 'DELETE FROM records where id = ?'
     await qy(query, [req.params.id]);
     
-    query = 'SELECT * FROM records ORDER BY id DESC';
+    query = 'SELECT * FROM records ORDER BY id DESC LIMIT 10';
     const response = await qy(query);
 
     res.send(response);

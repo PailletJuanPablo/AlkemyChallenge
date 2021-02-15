@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { makeStyles } from "@material-ui/core/styles";
 import Button from "@material-ui/core/Button";
@@ -6,7 +6,8 @@ import TextField from "@material-ui/core/TextField";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
 import Select from "@material-ui/core/Select";
-import FormControl from '@material-ui/core/FormControl';
+import FormControl from "@material-ui/core/FormControl";
+import ButtonGroup from "@material-ui/core/ButtonGroup";
 
 const useStyles = makeStyles((theme) => ({
   table: {
@@ -28,9 +29,17 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function RecordsAdd({records, setRecords}) {
+function RecordsAdd({ records, setRecords, recordToModify }) {
   const [open, setOpen] = useState(false);
-  const [newData, setNewData] = useState({});
+  const [newData, setNewData] = useState(recordToModify);
+  const [amountError, setAmountError] = useState(false);
+  const [descriptionError, setDescriptionError] = useState(false);
+
+  useEffect(() => {
+    setNewData(recordToModify);
+    setAmountError(false);
+    setDescriptionError(false);
+  }, [recordToModify]);
 
   const dataHandler = (e) => {
     newData[e.target.id] = e.target.value;
@@ -43,15 +52,55 @@ function RecordsAdd({records, setRecords}) {
   };
 
   const submitHandler = () => {
+    if (!newData.type) {
+      newData.type = "ingreso";
+    }
+    if (
+      (newData.type === "ingreso" && newData.amount < 0) ||
+      isNaN(parseFloat(newData.amount))
+    ) {
+      setAmountError(true);
+      return;
+    } else if (newData.type === "egreso" && newData.amount > 0) {
+      setAmountError(true);
+      return;
+    } else {
+      setAmountError(false);
+    }
+    if (newData.id) {
+      axios
+        .put("http://localhost:3000/record/" + newData.id, newData)
+        .then(function () {
+          const index = records.findIndex((record) => record.id === newData.id);
+          if (index !== -1) {
+            records.splice(index, 1, newData);
+          }
+          setRecords([...records]);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    } else {
+      axios
+        .post("http://localhost:3000/record", newData)
+        .then(function (response) {
+          records.unshift(response.data);
+          if (records.length > 10) {
+            records.pop();
+          }
+          setRecords([...records]);
+        })
+        .catch((err) => {
+          console.log(err);
+          setDescriptionError(true);
+        });
+    }
+  };
 
-    axios.post("http://localhost:3000/record", newData)
-    .then(function(response){
-      records.push(response.data)
-      setRecords([...records])
-    })
-    .catch((err) => {
-      console.log(err)
-    })
+  const resetHandler = () => {
+    setNewData({});
+    setAmountError(false);
+    setDescriptionError(false);
   };
 
   const handleClose = () => {
@@ -65,43 +114,55 @@ function RecordsAdd({records, setRecords}) {
   const classes = useStyles();
 
   return (
-    <div>
-      <form className={classes.root}>
-        <TextField
-          value={newData.amount}
-          id="amount"
-          label="Monto"
-          onChange={dataHandler}
-        />
-        <TextField
-          value={newData.concept}
-          id="concept"
-          label="Concepto"
-          onChange={dataHandler}
-        />
-        
-				<FormControl className={classes.formControl}>
+    <form className={classes.root}>
+      <TextField
+        value={newData.amount || ""}
+        id="amount"
+        label="Monto"
+        onChange={dataHandler}
+        error={amountError}
+        helperText="En caso de ser egreso agregue '-' "
+      />
+      <TextField
+        value={newData.concept || ""}
+        id="concept"
+        label="Concepto"
+        onChange={dataHandler}
+        error={descriptionError}
+        helperText="El campo debe estar completo"
+      />
+
+      <FormControl
+        className={classes.formControl}
+        disabled={newData.id ? true : false}
+      >
         <InputLabel id="type">Tipo</InputLabel>
-          <Select
-            labelId="type-label"
-            id="type-label"
-            name="type"
-            open={open}
-            onClose={handleClose}
-            onOpen={handleOpen}
-            onChange={selectHandler}
-            value={newData.type}
-            >
-            <MenuItem value={"ingreso"}>Ingreso</MenuItem>
-            <MenuItem value={"egreso"}>Egreso</MenuItem>
-          </Select>
-        </FormControl>
-        <Button variant="contained" onClick={submitHandler}>
-          Enviar
-        </Button>
-      </form>
-    </div>
+        <Select
+          labelId="type-label"
+          id="type-label"
+          name="type"
+          open={open}
+          onClose={handleClose}
+          onOpen={handleOpen}
+          onChange={selectHandler}
+          value={newData.type || "ingreso"}
+        >
+          <MenuItem value={"ingreso"}>Ingreso</MenuItem>
+          <MenuItem value={"egreso"}>Egreso</MenuItem>
+        </Select>
+      </FormControl>
+      <div style={{ width: "100%" }}>
+        <ButtonGroup color="primary" aria-label="outlined primary button group">
+          <Button variant="contained" onClick={submitHandler}>
+            {newData.id ? "Modificar" : "Enviar"}
+          </Button>
+          <Button variant="contained" onClick={resetHandler}>
+            Reset
+          </Button>
+        </ButtonGroup>
+      </div>
+    </form>
   );
 }
 
-export default RecordsAdd; 
+export default RecordsAdd;

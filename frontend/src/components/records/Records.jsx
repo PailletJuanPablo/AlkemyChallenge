@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
@@ -8,8 +8,10 @@ import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Paper from "@material-ui/core/Paper";
 import Button from "@material-ui/core/Button";
-import ButtonGroup from '@material-ui/core/ButtonGroup';
-
+import ButtonGroup from "@material-ui/core/ButtonGroup";
+import Moment from "react-moment";
+import EditIcon from "@material-ui/icons/Edit";
+import DeleteIcon from "@material-ui/icons/Delete";
 
 const useStyles = makeStyles((theme) => ({
   table: {
@@ -31,7 +33,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function Records({ records, handleDelete }) {
+function Records({ records, handleDelete, setRecordToModify }) {
   const classes = useStyles();
 
   return (
@@ -53,17 +55,25 @@ function Records({ records, handleDelete }) {
               <TableCell component="th" scope="row">
                 {row.id}
               </TableCell>
-              <TableCell align="right">{row.concept}</TableCell>
-              <TableCell align="right">{row.amount}</TableCell>
-              <TableCell align="right">{row.datetime.toString()}</TableCell>
-              <TableCell align="right">{row.type}</TableCell>
+              <TableCell align="center">{row.concept}</TableCell>
+              <TableCell align="center">{row.amount}</TableCell>
+              <TableCell align="center">
+                <Moment format="DD/MM/YYYY hh:mm:ss">
+                  {row.datetime.toString()}
+                </Moment>
+              </TableCell>
+              <TableCell align="center">{row.type}</TableCell>
               <TableCell align="center">
                 <ButtonGroup
                   color="primary"
                   aria-label="outlined primary button group"
                 >
-                  <Button>Modificar</Button>
-                  <Button onClick={() => handleDelete(row.id)}>Eliminar</Button>
+                  <Button onClick={() => setRecordToModify(row)}>
+                    <EditIcon />
+                  </Button>
+                  <Button onClick={() => handleDelete(row.id)}>
+                    <DeleteIcon />
+                  </Button>
                 </ButtonGroup>
               </TableCell>
             </TableRow>
@@ -73,6 +83,5 @@ function Records({ records, handleDelete }) {
     </TableContainer>
   );
 }
-
 
 export default Records;
